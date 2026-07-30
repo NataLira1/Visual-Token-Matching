@@ -49,7 +49,8 @@ omnitools.download rgb segment_semantic \
 > **Nota sobre `omnidata-tools==0.0.23`:** o pacote contém um módulo legado
 > `omnidata_tools.starter_dataset` com imports inválidos. O notebook valida o
 > módulo correto, `omnidata_tools.dataset.starter_dataset`, usado pelo comando de
-> download.
+> download. Ele também substitui a integração obsoleta com Google Forms por um
+> aceite explícito dos links das licenças, sem transmitir nome ou e-mail.
 
 Se o dataset já estiver em outro local, altere apenas `data.root` em
 `configs/taskonomy_vtm.yaml`. Confira os pré-requisitos:
