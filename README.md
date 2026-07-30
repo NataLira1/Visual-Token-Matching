@@ -46,11 +46,10 @@ omnitools.download rgb segment_semantic \
   --name "SEU NOME" --email "SEU_EMAIL"
 ```
 
-> **Nota sobre `omnidata-tools==0.0.23`:** essa versão pode terminar com
-> `KeyError: 'omnidata'` logo depois de exibir a licença do Taskonomy, pois falta
-> uma entrada no mapa interno de licenças. O notebook Colab aplica
-> automaticamente uma correção de compatibilidade no runtime antes do dry-run.
-> Para executar pelo terminal, prefira a célula de download do notebook.
+> **Nota sobre `omnidata-tools==0.0.23`:** o pacote contém um módulo legado
+> `omnidata_tools.starter_dataset` com imports inválidos. O notebook valida o
+> módulo correto, `omnidata_tools.dataset.starter_dataset`, usado pelo comando de
+> download.
 
 Se o dataset já estiver em outro local, altere apenas `data.root` em
 `configs/taskonomy_vtm.yaml`. Confira os pré-requisitos:
