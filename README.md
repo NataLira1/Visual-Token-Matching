@@ -36,12 +36,14 @@ sudo apt-get install aria2
 omnitools.download rgb segment_semantic \
   --components taskonomy --subset tiny \
   --dest ./data/taskonomy \
-  --connections_total 16 --agree_all --dryrun
+  --connections_total 16 --agree_all \
+  --name "SEU NOME" --email "SEU_EMAIL" --dryrun
 
 omnitools.download rgb segment_semantic \
   --components taskonomy --subset tiny \
   --dest ./data/taskonomy \
-  --connections_total 16 --agree_all
+  --connections_total 16 --agree_all \
+  --name "SEU NOME" --email "SEU_EMAIL"
 ```
 
 Se o dataset já estiver em outro local, altere apenas `data.root` em
