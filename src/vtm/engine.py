@@ -38,6 +38,25 @@ def create_model(config: dict[str, Any], pretrained: bool | None = None) -> VTM:
     )
 
 
+def _classes_with_coverage(
+    records: Sequence[PairRecord],
+    classes: dict[str, int],
+    split: str,
+    minimum_fraction: float,
+    required: int,
+) -> tuple[dict[str, int], dict[str, int]]:
+    eligible, excluded = {}, {}
+    for name, class_id in classes.items():
+        count = len(
+            select_records(records, split, int(class_id), minimum_fraction)
+        )
+        if count >= required:
+            eligible[name] = int(class_id)
+        else:
+            excluded[name] = count
+    return eligible, excluded
+
+
 def _episodic_batch(
     episode: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
     device: torch.device,
@@ -102,7 +121,6 @@ def train_meta(
     seed_everything(int(config["seed"]))
     device = device or default_device()
     data_config, train_config = config["data"], config["train"]
-    model = create_model(config).to(device)
     sampler = EpisodeSampler(
         records,
         int(data_config["image_size"]),
@@ -110,6 +128,42 @@ def train_meta(
         int(data_config["uncertain_id"]),
         int(config["seed"]),
     )
+    train_required = int(train_config["support_size"]) + int(train_config["query_size"])
+    train_classes, excluded_train = _classes_with_coverage(
+        records,
+        data_config["train_classes"],
+        "train",
+        float(data_config["min_positive_fraction"]),
+        train_required,
+    )
+    val_classes, excluded_val = _classes_with_coverage(
+        records,
+        data_config["val_classes"],
+        "val",
+        float(data_config["min_positive_fraction"]),
+        2,
+    )
+    if excluded_train:
+        print(
+            "Classes ignoradas no meta-treino por cobertura insuficiente "
+            f"(necessário {train_required}): {excluded_train}"
+        )
+    if excluded_val:
+        print(
+            "Classes ignoradas na meta-validação por cobertura insuficiente "
+            f"(necessário 2): {excluded_val}"
+        )
+    if len(train_classes) < 2:
+        raise ValueError(
+            "O meta-treino requer pelo menos duas classes com "
+            f"{train_required} exemplos positivos; válidas: {train_classes}."
+        )
+    if not val_classes:
+        raise ValueError(
+            "Nenhuma classe de meta-validação possui dois exemplos positivos."
+        )
+
+    model = create_model(config).to(device)
     optimizer = torch.optim.AdamW(
         [parameter for parameter in model.parameters() if parameter.requires_grad],
         lr=float(train_config["learning_rate"]),
@@ -117,7 +171,7 @@ def train_meta(
     )
     amp = bool(train_config["mixed_precision"]) and device.type == "cuda"
     scaler = torch.amp.GradScaler(device.type, enabled=amp)
-    class_names = list(data_config["train_classes"])
+    class_names = list(train_classes)
     checkpoint = Path(train_config["checkpoint"])
     checkpoint.parent.mkdir(parents=True, exist_ok=True)
     history: list[dict[str, float]] = []
@@ -126,7 +180,7 @@ def train_meta(
     for episode_index in range(1, int(train_config["episodes"]) + 1):
         model.train()
         task = class_names[(episode_index - 1) % len(class_names)]
-        class_id = int(data_config["train_classes"][task])
+        class_id = train_classes[task]
         episode = sampler.episode(
             "train",
             class_id,
@@ -158,7 +212,7 @@ def train_meta(
         val_iou = validate_meta(
             model,
             sampler,
-            data_config["val_classes"],
+            val_classes,
             int(train_config["validation_episodes"]),
             device,
             int(data_config["max_val_pairs"]),

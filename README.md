@@ -75,7 +75,9 @@ Colab. Esse modo baixa apenas o subconjunto Taskonomy `debug` (um prédio) para
 resultados. Como há apenas um prédio, as imagens são divididas
 deterministicamente por hash em 70% treino, 15% validação e 15% teste. Portanto,
 o experimento compacto avalia generalização entre tarefas/classes, não entre
-prédios.
+prédios. Como a cobertura varia por prédio, classes que não tenham imagens
+suficientes para formar um episódio são registradas e ignoradas automaticamente;
+o meta-treino exige pelo menos duas classes válidas.
 
 No modo compacto do Colab, o dataset permanece em `/content/taskonomy`; não
 desconecte ou reinicie o runtime entre download, preparação, treino e avaliação.
