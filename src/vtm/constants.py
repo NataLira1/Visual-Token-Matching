@@ -1,4 +1,9 @@
-"""IDs e splits publicados pelo Taskonomy."""
+"""IDs brutos dos PNGs semânticos e splits publicados pelo Taskonomy.
+
+O código oficial do VTM converte os PNGs antes do one-hot: 0 vira background,
+os IDs são deslocados em uma posição e as tarefas usam 2..16. Este protótipo
+opera diretamente nos PNGs; por isso chair=3 e couch=4 estão corretos aqui.
+"""
 
 TASKONOMY_CLASSES = {
     "background": 1,

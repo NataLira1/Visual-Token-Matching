@@ -3,7 +3,7 @@ seed: 0
 data:
   # Taskonomy debug (um prédio) no disco temporário do Colab.
   root: /content/taskonomy
-  manifest: /content/drive/MyDrive/vtm_outputs_compact/taskonomy_manifest.json
+  manifest: /content/drive/MyDrive/vtm_semantic_experiment/taskonomy_manifest.json
   split_strategy: image_hash
   split_seed: 0
   split_ratios:
@@ -17,15 +17,17 @@ data:
   max_test_queries_per_class: 50
   uncertain_id: 0
   train_classes:
-    plant: 5
-    bed: 6
     dining_table: 7
-    toilet: 8
     tv: 9
-    book: 15
-  val_classes:
+    microwave: 10
+    oven: 11
+    sink: 13
+    refrigerator: 14
     clock: 16
     vase: 17
+  val_classes:
+    plant: 5
+    bed: 6
   test_classes:
     chair: 3
     couch: 4
@@ -50,7 +52,7 @@ train:
   validation_episodes: 10
   early_stopping_patience: 250
   mixed_precision: true
-  checkpoint: /content/drive/MyDrive/vtm_outputs_compact/vtm_best.pt
+  checkpoint: /content/drive/MyDrive/vtm_semantic_experiment/vtm_best.pt
 
 adapt:
   learning_rate: 0.005
@@ -67,7 +69,8 @@ adapt:
 experiment:
   shots: [1, 5, 10]
   seeds: [0]
-  output_dir: /content/drive/MyDrive/vtm_outputs_compact/evaluation
-  threshold: 0.5
+  output_dir: /content/drive/MyDrive/vtm_semantic_experiment/evaluation
+  # O código oficial do VTM usa 0.2 para segmentação semântica.
+  threshold: 0.2
   min_test_supports: 10
   min_test_queries: 10

@@ -81,6 +81,19 @@ o meta-treino exige pelo menos duas classes válidas. Pares RGB/máscara
 corrompidos ou incompletos também são ignorados, com detalhes salvos em
 `corrupt_records.json` ao lado do manifest.
 
+Os artefatos compactos são gravados em
+`MyDrive/vtm_semantic_experiment`; RGB e máscaras nunca são copiados para essa
+pasta.
+
+Os IDs configurados são os valores brutos armazenados nos PNGs do Taskonomy
+(`chair=3`, `couch=4`, ..., `vase=17`). O código oficial do VTM primeiro converte
+esses PNGs e passa a referir-se às classes deslocadas (`chair=2`, `couch=3`,
+etc.); misturar os dois espaços de IDs produz máscaras erradas. O protótipo
+mantém os IDs brutos e mostra exemplos RGB/máscara antes do treino. Para evitar
+as classes de baixa cobertura apontadas pelo artigo, `bottle`, `toilet` e `book`
+não participam da configuração compacta. A binarização de inferência usa limiar
+0,2, igual ao arquivo de configuração do código oficial.
+
 No modo compacto do Colab, o dataset permanece em `/content/taskonomy`; não
 desconecte ou reinicie o runtime entre download, preparação, treino e avaliação.
 

@@ -64,6 +64,7 @@ experiment:
   shots: [1, 5, 10]
   seeds: [0, 1, 2]
   output_dir: outputs/evaluation
-  threshold: 0.5
+  # O código oficial do VTM usa 0.2 para segmentação semântica.
+  threshold: 0.2
   min_test_supports: 10
   min_test_queries: 30

@@ -443,7 +443,10 @@ def _resolve_test_classes(
     minimum_queries = int(experiment["min_test_queries"])
     selected: dict[str, int] = {}
     changes = []
-    candidates = {**data["test_classes"], **data["train_classes"]}
+    # Uma substituição por classe de meta-treino faria a tarefa deixar de ser
+    # inédita e invalidaria a avaliação few-shot. Somente classes declaradas
+    # como meta-teste podem ser usadas aqui.
+    candidates = dict(data["test_classes"])
     used_ids = set()
     for requested_name, requested_id in data["test_classes"].items():
         eligible = []
@@ -462,8 +465,10 @@ def _resolve_test_classes(
         choice = requested_eligible or (max(eligible) if eligible else None)
         if choice is None:
             raise ValueError(
-                f"Nenhuma classe satisfaz {minimum_supports} supports e "
-                f"{minimum_queries} queries."
+                f"A classe meta-teste {requested_name!r} não satisfaz "
+                f"{minimum_supports} supports de treino e {minimum_queries} "
+                "queries de teste. Reduza os mínimos ou escolha outra classe "
+                "inédita explicitamente na configuração."
             )
         _, chosen_name, chosen_id = choice
         selected[chosen_name] = chosen_id
