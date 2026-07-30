@@ -77,7 +77,9 @@ deterministicamente por hash em 70% treino, 15% validação e 15% teste. Portant
 o experimento compacto avalia generalização entre tarefas/classes, não entre
 prédios. Como a cobertura varia por prédio, classes que não tenham imagens
 suficientes para formar um episódio são registradas e ignoradas automaticamente;
-o meta-treino exige pelo menos duas classes válidas.
+o meta-treino exige pelo menos duas classes válidas. Pares RGB/máscara
+corrompidos ou incompletos também são ignorados, com detalhes salvos em
+`corrupt_records.json` ao lado do manifest.
 
 No modo compacto do Colab, o dataset permanece em `/content/taskonomy`; não
 desconecte ou reinicie o runtime entre download, preparação, treino e avaliação.

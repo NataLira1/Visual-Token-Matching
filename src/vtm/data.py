@@ -190,6 +190,33 @@ def load_manifest(path: str | Path) -> list[PairRecord]:
     return [PairRecord.from_dict(record) for record in payload["records"]]
 
 
+def filter_readable_records(
+    records: Sequence[PairRecord],
+) -> tuple[list[PairRecord], list[dict[str, str]]]:
+    """Remove pares corrompidos sem aceitar imagens parcialmente decodificadas."""
+    readable, failures = [], []
+    for record in records:
+        failure = None
+        for domain, path in (("rgb", record.rgb), ("mask", record.mask)):
+            try:
+                with Image.open(path) as image:
+                    image.load()
+            except (OSError, ValueError, SyntaxError) as error:
+                failure = {
+                    "key": record.key,
+                    "building": record.building,
+                    "domain": domain,
+                    "path": path,
+                    "error": f"{type(error).__name__}: {error}",
+                }
+                break
+        if failure is None:
+            readable.append(record)
+        else:
+            failures.append(failure)
+    return readable, failures
+
+
 def select_records(
     records: Sequence[PairRecord],
     split: str,

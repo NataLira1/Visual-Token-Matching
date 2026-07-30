@@ -6,6 +6,7 @@ from PIL import Image
 
 from vtm.data import (
     build_manifest,
+    filter_readable_records,
     load_pair,
     make_synthetic_taskonomy,
 )
@@ -82,3 +83,24 @@ def test_image_hash_split_is_deterministic_and_disjoint(tmp_path: Path) -> None:
         "wiconisco",
         "muleshoe",
     }
+
+
+def test_corrupted_rgb_is_excluded(tmp_path: Path) -> None:
+    root = tmp_path / "data"
+    make_synthetic_taskonomy(root, image_size=16)
+    records = build_manifest(root, tmp_path / "manifest.json", [3])
+    Path(records[0].rgb).write_bytes(b"not-an-image")
+
+    readable, failures = filter_readable_records(records)
+
+    assert len(readable) == len(records) - 1
+    assert failures == [
+        {
+            "key": records[0].key,
+            "building": records[0].building,
+            "domain": "rgb",
+            "path": records[0].rgb,
+            "error": "UnidentifiedImageError: cannot identify image file "
+            f"'{records[0].rgb}'",
+        }
+    ]

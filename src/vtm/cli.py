@@ -8,7 +8,13 @@ from typing import Any
 import yaml
 
 from .config import load_config, smoke_config
-from .data import build_manifest, load_manifest, make_synthetic_taskonomy, select_records
+from .data import (
+    build_manifest,
+    filter_readable_records,
+    load_manifest,
+    make_synthetic_taskonomy,
+    select_records,
+)
 from .engine import (
     evaluate_experiment,
     load_checkpoint,
@@ -66,6 +72,30 @@ def _require_checkpoint(config: dict[str, Any]) -> Path:
     return checkpoint
 
 
+def _load_checked_manifest(config: dict[str, Any]) -> list:
+    manifest = Path(config["data"]["manifest"]).expanduser()
+    records = load_manifest(manifest)
+    print(f"Validando integridade de {len(records)} pares RGB/máscara...")
+    readable, failures = filter_readable_records(records)
+    report = manifest.with_name("corrupt_records.json")
+    if failures:
+        write_json(report, failures)
+        print(
+            f"Aviso: {len(failures)} de {len(records)} pares ilegíveis foram "
+            f"ignorados. Relatório: {report}"
+        )
+        for failure in failures[:5]:
+            print(
+                f"  - {failure['domain']}: {failure['path']} "
+                f"({failure['error']})"
+            )
+    elif report.exists():
+        report.unlink()
+    if not readable:
+        raise RuntimeError("Nenhum par RGB/máscara legível permaneceu no manifest.")
+    return readable
+
+
 def command_prepare(config: dict[str, Any]) -> None:
     _require_data_root(config)
     records = build_manifest(
@@ -95,7 +125,7 @@ def command_prepare(config: dict[str, Any]) -> None:
 
 def command_train(config: dict[str, Any]) -> None:
     _require_manifest(config)
-    records = load_manifest(config["data"]["manifest"])
+    records = _load_checked_manifest(config)
     device = default_device()
     print(f"Treinando em {device}: {environment_info()}")
     _, history = train_meta(config, records, device)
@@ -108,7 +138,7 @@ def command_train(config: dict[str, Any]) -> None:
 def command_evaluate(config: dict[str, Any]) -> None:
     _require_manifest(config)
     _require_checkpoint(config)
-    records = load_manifest(config["data"]["manifest"])
+    records = _load_checked_manifest(config)
     device = default_device()
     model = load_checkpoint(config, device)
     rows = evaluate_experiment(config, records, model, device)
