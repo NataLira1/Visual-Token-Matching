@@ -277,6 +277,12 @@ def load_pair(
     rng = rng or random.Random(0)
     image = Image.open(record.rgb).convert("RGB")
     raw_mask = Image.open(record.mask)
+    # Os arquivos Taskonomy/Omnidata podem armazenar RGB em 512² e máscaras em
+    # 256². Eles representam o mesmo campo de visão, portanto alinhamos o RGB à
+    # grade da máscara antes de qualquer crop/flip sincronizado. A máscara nunca
+    # usa interpolação contínua, preservando os IDs inteiros das classes.
+    if image.size != raw_mask.size:
+        image = image.resize(raw_mask.size, Image.Resampling.BILINEAR)
     image, raw_mask = _joint_transform(image, raw_mask, image_size, augment, rng)
 
     image_array = np.array(image, dtype=np.float32, copy=True) / 255.0

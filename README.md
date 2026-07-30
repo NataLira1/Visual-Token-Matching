@@ -94,6 +94,11 @@ as classes de baixa cobertura apontadas pelo artigo, `bottle`, `toilet` e `book`
 não participam da configuração compacta. A binarização de inferência usa limiar
 0,2, igual ao arquivo de configuração do código oficial.
 
+RGB e máscara podem ser distribuídos em resoluções diferentes (por exemplo,
+512×512 e 256×256). O loader redimensiona primeiro o RGB para a grade da máscara
+com interpolação bilinear; a máscara mantém seus IDs inteiros e usa apenas
+interpolação nearest-neighbor nas transformações seguintes.
+
 No modo compacto do Colab, o dataset permanece em `/content/taskonomy`; não
 desconecte ou reinicie o runtime entre download, preparação, treino e avaliação.
 

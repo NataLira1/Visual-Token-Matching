@@ -104,3 +104,18 @@ def test_corrupted_rgb_is_excluded(tmp_path: Path) -> None:
             f"'{records[0].rgb}'",
         }
     ]
+
+
+def test_rgb_is_aligned_to_lower_resolution_mask(tmp_path: Path) -> None:
+    root = tmp_path / "data"
+    make_synthetic_taskonomy(root, image_size=16)
+    records = build_manifest(root, tmp_path / "manifest.json", [3])
+    record = records[0]
+    rgb = Image.open(record.rgb).convert("RGB").resize((32, 32))
+    rgb.save(record.rgb)
+
+    image, target, valid = load_pair(record, 3, image_size=24)
+
+    assert image.shape == (3, 24, 24)
+    assert target.shape == valid.shape == (1, 24, 24)
+    assert set(torch.unique(target).tolist()) <= {0.0, 1.0}
