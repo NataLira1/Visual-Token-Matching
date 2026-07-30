@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import random
 import re
@@ -122,14 +123,49 @@ def build_manifest(
     root: str | Path,
     output: str | Path,
     class_ids: Iterable[int],
+    split_strategy: str = "building",
+    split_ratios: dict[str, float] | None = None,
+    split_seed: int = 0,
 ) -> list[PairRecord]:
+    pairs = discover_pairs(root)
+    if split_strategy == "building":
+        assigned_splits = {
+            key: BUILDING_TO_SPLIT[building] for key, building, _, _ in pairs
+        }
+    elif split_strategy == "image_hash":
+        ratios = split_ratios or {"train": 0.70, "val": 0.15, "test": 0.15}
+        expected = {"train", "val", "test"}
+        if set(ratios) != expected or any(float(value) <= 0 for value in ratios.values()):
+            raise ValueError("split_ratios deve conter train/val/test com valores positivos.")
+        total = sum(float(value) for value in ratios.values())
+        normalized = {name: float(value) / total for name, value in ratios.items()}
+        ranked = sorted(
+            pairs,
+            key=lambda pair: hashlib.sha256(
+                f"{split_seed}:{pair[0]}".encode("utf-8")
+            ).digest(),
+        )
+        count = len(ranked)
+        train_end = round(count * normalized["train"])
+        val_end = train_end + round(count * normalized["val"])
+        assigned_splits = {}
+        for index, (key, _, _, _) in enumerate(ranked):
+            assigned_splits[key] = (
+                "train" if index < train_end else "val" if index < val_end else "test"
+            )
+    else:
+        raise ValueError(
+            f"split_strategy desconhecida: {split_strategy!r}; "
+            "use 'building' ou 'image_hash'."
+        )
+
     records = []
-    for key, building, rgb, mask in discover_pairs(root):
+    for key, building, rgb, mask in pairs:
         records.append(
             PairRecord(
                 key=key,
                 building=building,
-                split=BUILDING_TO_SPLIT[building],
+                split=assigned_splits[key],
                 rgb=str(rgb.resolve()),
                 mask=str(mask.resolve()),
                 coverage=_mask_coverage(mask, class_ids),
@@ -139,6 +175,9 @@ def build_manifest(
         output,
         {
             "root": str(Path(root).resolve()),
+            "split_strategy": split_strategy,
+            "split_ratios": split_ratios,
+            "split_seed": split_seed,
             "records": [record.__dict__ for record in records],
         },
     )

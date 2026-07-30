@@ -1,0 +1,73 @@
+seed: 0
+
+data:
+  # Taskonomy debug (um prédio) no disco temporário do Colab.
+  root: /content/taskonomy
+  manifest: /content/drive/MyDrive/vtm_outputs_compact/taskonomy_manifest.json
+  split_strategy: image_hash
+  split_seed: 0
+  split_ratios:
+    train: 0.70
+    val: 0.15
+    test: 0.15
+  image_size: 128
+  min_positive_fraction: 0.005
+  max_train_pairs: 600
+  max_val_pairs: 100
+  max_test_queries_per_class: 50
+  uncertain_id: 0
+  train_classes:
+    plant: 5
+    bed: 6
+    dining_table: 7
+    toilet: 8
+    tv: 9
+    book: 15
+  val_classes:
+    clock: 16
+    vase: 17
+  test_classes:
+    chair: 3
+    couch: 4
+
+model:
+  backbone: vit_tiny_patch16_224
+  pretrained: true
+  feature_blocks: [2, 5, 8, 11]
+  label_depth: 4
+  num_heads: 4
+  decoder_width: 96
+  dropout: 0.0
+
+train:
+  episodes: 1500
+  support_size: 4
+  query_size: 2
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+  validation_interval: 50
+  validation_episodes: 10
+  early_stopping_patience: 250
+  mixed_precision: true
+  checkpoint: /content/drive/MyDrive/vtm_outputs_compact/vtm_best.pt
+
+adapt:
+  learning_rate: 0.005
+  steps:
+    1: 100
+    5: 200
+    10: 300
+  baseline_learning_rate: 0.005
+  baseline_steps:
+    1: 100
+    5: 200
+    10: 300
+
+experiment:
+  shots: [1, 5, 10]
+  seeds: [0]
+  output_dir: /content/drive/MyDrive/vtm_outputs_compact/evaluation
+  threshold: 0.5
+  min_test_supports: 10
+  min_test_queries: 10

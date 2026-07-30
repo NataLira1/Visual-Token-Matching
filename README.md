@@ -67,8 +67,18 @@ vtm-taskonomy train --config configs/taskonomy_vtm.yaml
 vtm-taskonomy evaluate --config configs/taskonomy_vtm.yaml
 ```
 
-No Colab, o notebook troca `data.root` para
-`/content/drive/MyDrive/taskonomy` automaticamente.
+### Colab com pouco espaço
+
+Use [a configuração compacta](configs/taskonomy_vtm_compact.yaml) e o notebook
+Colab. Esse modo baixa apenas o subconjunto Taskonomy `debug` (um prédio) para
+`/content`, que é temporário, e persiste no Drive somente manifest, checkpoint e
+resultados. Como há apenas um prédio, as imagens são divididas
+deterministicamente por hash em 70% treino, 15% validação e 15% teste. Portanto,
+o experimento compacto avalia generalização entre tarefas/classes, não entre
+prédios.
+
+No modo compacto do Colab, o dataset permanece em `/content/taskonomy`; não
+desconecte ou reinicie o runtime entre download, preparação, treino e avaliação.
 
 Um teste completo com dados sintéticos, sem download e sem pesos externos:
 

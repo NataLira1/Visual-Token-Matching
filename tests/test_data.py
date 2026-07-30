@@ -45,3 +45,40 @@ def test_palette_mask_preserves_class_ids(tmp_path: Path) -> None:
     palette_mask.save(record.mask)
     _, target, _ = load_pair(record, 3, image_size=16)
     assert target.sum().item() == 64
+
+
+def test_image_hash_split_is_deterministic_and_disjoint(tmp_path: Path) -> None:
+    root = tmp_path / "data"
+    make_synthetic_taskonomy(root, image_size=16)
+    first = build_manifest(
+        root,
+        tmp_path / "first.json",
+        [3],
+        split_strategy="image_hash",
+        split_ratios={"train": 0.70, "val": 0.15, "test": 0.15},
+        split_seed=7,
+    )
+    second = build_manifest(
+        root,
+        tmp_path / "second.json",
+        [3],
+        split_strategy="image_hash",
+        split_ratios={"train": 0.70, "val": 0.15, "test": 0.15},
+        split_seed=7,
+    )
+    assert [(record.key, record.split) for record in first] == [
+        (record.key, record.split) for record in second
+    ]
+    keys_by_split = {
+        split: {record.key for record in first if record.split == split}
+        for split in ("train", "val", "test")
+    }
+    assert all(keys_by_split.values())
+    assert keys_by_split["train"].isdisjoint(keys_by_split["val"])
+    assert keys_by_split["train"].isdisjoint(keys_by_split["test"])
+    assert keys_by_split["val"].isdisjoint(keys_by_split["test"])
+    assert {record.building for record in first} == {
+        "hanson",
+        "wiconisco",
+        "muleshoe",
+    }

@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 from .config import load_config, smoke_config
-from .data import build_manifest, load_manifest, make_synthetic_taskonomy
+from .data import build_manifest, load_manifest, make_synthetic_taskonomy, select_records
 from .engine import (
     evaluate_experiment,
     load_checkpoint,
@@ -72,11 +72,25 @@ def command_prepare(config: dict[str, Any]) -> None:
         config["data"]["root"],
         config["data"]["manifest"],
         _class_ids(config),
+        split_strategy=config["data"].get("split_strategy", "building"),
+        split_ratios=config["data"].get("split_ratios"),
+        split_seed=int(config["data"].get("split_seed", config["seed"])),
     )
     counts: dict[str, int] = {}
     for record in records:
         counts[record.split] = counts.get(record.split, 0) + 1
     print(f"Manifest criado com {len(records)} pares: {counts}")
+    minimum = float(config["data"]["min_positive_fraction"])
+    for group, split in (
+        ("train_classes", "train"),
+        ("val_classes", "val"),
+        ("test_classes", "test"),
+    ):
+        coverage = {
+            name: len(select_records(records, split, int(class_id), minimum))
+            for name, class_id in config["data"][group].items()
+        }
+        print(f"Cobertura positiva em {split}: {coverage}")
 
 
 def command_train(config: dict[str, Any]) -> None:
